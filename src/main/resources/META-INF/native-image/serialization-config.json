@@ -1,0 +1,8 @@
+[
+  {
+    "name": "com.example.lambda.model.Product"
+  },
+  {
+    "name": "com.example.lambda.model.ApiResponse"
+  }
+]

@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Product API - AWS Lambda with Java 21 GraalVM Native Image
+  Ultra-fast cold starts with native compilation
+
+Globals:
+  Function:
+    Timeout: 30
+    MemorySize: 256
+    Environment:
+      Variables:
+        JAVA_TOOL_OPTIONS: ""
+        DISABLE_SIGNAL_HANDLERS: "true"
+
+Resources:
+  ProductApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: product-api-graalvm
+      PackageType: Image
+      Architectures:
+        - arm64
+      Events:
+        GetProducts:
+          Type: Api
+          Properties:
+            Path: /products
+            Method: get
+        GetProductById:
+          Type: Api
+          Properties:
+            Path: /products/{id}
+            Method: get
+        CreateProduct:
+          Type: Api
+          Properties:
+            Path: /products
+            Method: post
+        DeleteProduct:
+          Type: Api
+          Properties:
+            Path: /products/{id}
+            Method: delete
+        HealthCheck:
+          Type: Api
+          Properties:
+            Path: /health
+            Method: get
+      Tags:
+        Runtime: graalvm-native
+        Language: java-21
+    Metadata:
+      DockerTag: latest
+      DockerContext: .
+      Dockerfile: Dockerfile
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+
+  FunctionArn:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt ProductApiFunction.Arn
+
+  FunctionName:
+    Description: "Lambda Function Name"
+    Value: !Ref ProductApiFunction
