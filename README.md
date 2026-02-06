@@ -1,5 +1,9 @@
 # AWS Lambda + Java 21 + GraalVM Native Image — Step-by-Step Guide
 
+> ⚠️ **Disclaimer:** This project is a **demo/sample application for learning purposes only**. It uses broad IAM permissions and an in-memory data store. For production-grade deployments, always follow the **principle of least privilege** for IAM, use proper data persistence (e.g., DynamoDB), enable authentication/authorization, and follow AWS Well-Architected Framework best practices.
+>
+> 💰 **Cost Warning:** Running this project on your personal AWS account **will incur charges** (Lambda, API Gateway, ECR, S3, CloudWatch). **Always clean up resources after testing** by running `./build.sh cleanup` to delete the CloudFormation stack and associated resources. See [Step 10 — Cleanup](#step-10--cleanup-when-done) for details.
+
 A complete walkthrough for building, testing, and deploying a REST API on AWS Lambda using Java 21 compiled to a GraalVM native image for ultra-fast cold starts (~100-200ms vs 3-6s on JVM).
 
 ---
@@ -146,6 +150,8 @@ aws iam attach-user-policy \
   --user-name YOUR_USERNAME \
   --policy-arn arn:aws:iam::aws:policy/AdministratorAccess
 ```
+
+> ⚠️ **Security Notice:** The IAM permissions above are intentionally broad for **demo/learning purposes only**. For production accounts, always follow the **principle of least privilege** — create a dedicated IAM role with only the specific permissions required for deployment. Never use `AdministratorAccess` in production environments.
 
 **Verify:**
 ```bash
@@ -431,13 +437,42 @@ Force a cold start and measure response time:
 
 ### Step 10 — Cleanup (When Done)
 
-Delete all AWS resources to stop incurring charges:
+> 🚨 **Important:** If you're using a personal AWS account, **always clean up after testing** to avoid unexpected charges. ECR image storage, CloudWatch logs, and S3 buckets will accumulate costs over time even without active invocations.
+
+Delete all AWS resources:
 
 ```bash
 ./build.sh cleanup
 ```
 
-This deletes the CloudFormation stack, Lambda function, API Gateway, ECR image, and IAM role.
+This deletes the CloudFormation stack, Lambda function, API Gateway, and IAM role.
+
+**Additionally, manually clean up these resources that SAM may leave behind:**
+
+```bash
+# Delete ECR images
+aws ecr delete-repository \
+  --repository-name product-api-graalvm-stack --force \
+  --region us-east-1 2>/dev/null
+
+# Delete SAM-managed S3 bucket (list first, then delete)
+aws s3 ls | grep aws-sam-cli-managed
+# aws s3 rb s3://BUCKET_NAME_FROM_ABOVE --force
+
+# Delete CloudWatch log group
+aws logs delete-log-group \
+  --log-group-name /aws/lambda/product-api-graalvm \
+  --region us-east-1 2>/dev/null
+```
+
+**Verify everything is cleaned up:**
+```bash
+aws cloudformation list-stacks \
+  --region us-east-1 \
+  --query 'StackSummaries[?StackName==`product-api-graalvm-stack` && StackStatus!=`DELETE_COMPLETE`]'
+```
+
+This should return an empty list `[]`.
 
 ---
 
