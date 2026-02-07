@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 
 /**
- * Generic API response wrapper using sealed interface and records (Java 21).
+ * Generic API response wrapper using records (Java 21).
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record ApiResponse<T>(
